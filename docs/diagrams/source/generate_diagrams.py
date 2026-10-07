@@ -3,7 +3,7 @@ import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, Rectangle
+from matplotlib.patches import Rectangle
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..") + os.sep
 plt.rcParams["font.family"] = "DejaVu Sans"
@@ -46,71 +46,12 @@ def lollipop(ax, x, y, label, side="up"):
     ax.text(x + 0.15, y + dy + (0.09 if side == "up" else -0.09), label, fontsize=6.5, va="center")
 
 
-# ---------------------------------------------------------------- component diagram
-def component_diagram():
-    fig, ax = plt.subplots(figsize=(13, 10.5))
-    ax.set_xlim(0, 26); ax.set_ylim(0, 21); ax.axis("off")
-    ax.text(13, 20.6, "Vehicle Parking System – UML Component Diagram", ha="center", fontsize=13, weight="bold")
-
-    # Presentation tier
-    package(ax, 0.5, 16.2, 25, 3.6, "Presentation Tier  –  React SPA (Browser)", "#EAF2FB")
-    ui = [("Driver Portal UI", 1.0), ("Attendant Console UI", 7.1), ("Admin Dashboard UI", 13.2), ("API Client & Socket Client", 19.3)]
-    uib = {}
-    for n, x in ui:
-        uib[n] = component(ax, x, 16.7, 5.6, 1.5, n, fc="#FFFFFF")
-    for n in ui[:3]:
-        bx = uib[n[0]]
-        ax.plot([bx[0] + bx[2] / 2, bx[0] + bx[2] / 2], [18.2, 18.6], color="#222", lw=1, ls=(0, (4, 3)))
-    ax.plot([3.8, 22.1], [18.6, 18.6], color="#222", lw=1, ls=(0, (4, 3)))
-    arrow(ax, (22.1, 18.6), (22.1, 18.2), dashed=True)
-    ax.text(13, 18.75, "«use»", ha="center", fontsize=7, style="italic")
-    ax.text(13, 19.35, "Shared modules: Auth Context (access token in memory) · Role-based Route Guards · Live Slot Map (Socket.IO)", ha="center", fontsize=7.5, style="italic")
-
-    # Application tier
-    package(ax, 0.5, 4.2, 25, 10.9, "Application Tier  –  Node.js + Express.js REST API Server", "#EEF8EE")
-    gw = component(ax, 1.0, 12.6, 24.0, 1.4, "API Layer: Router + Middleware (Helmet, CORS, Rate Limiter, JWT Auth, RBAC, Input Validation, Error Handler)", fc="#FFFDE8", fs=8.2)
-    lollipop(ax, 12.0, 14.0, "REST /api/v1  (HTTPS)")
-    lollipop(ax, 21.5, 14.0, "WebSocket (Socket.IO)")
-
-    svcs = [("Auth & User\nService", 1.0, 9.6), ("Slot Management\nService", 5.9, 9.6), ("Booking\nService", 10.8, 9.6),
-            ("Parking Session\n(Entry/Exit) Service", 15.7, 9.6), ("Billing & Payment\nService", 20.6, 9.6),
-            ("Vehicle Tracking\nService", 1.0, 6.9), ("Reporting &\nAnalytics Service", 5.9, 6.9), ("Notification\nService", 10.8, 6.9),
-            ("Audit Logging\nService", 15.7, 6.9), ("Scheduler (Booking\nExpiry Job)", 20.6, 6.9)]
-    sb = {}
-    for n, x, y in svcs:
-        sb[n.split("\n")[0]] = component(ax, x, y, 4.4, 1.9, n, fc="white", fs=8)
-    # API layer -> services
-    for n, x, y in svcs[:5]:
-        arrow(ax, (x + 2.2, 12.6), (x + 2.2, y + 1.9))
-    ax.text(13, 12.25, "delegates to service layer (controllers call services)", fontsize=7, ha="center", style="italic",
-            bbox=dict(fc="#EEF8EE", ec="none", pad=0.5))
-
-    dal = component(ax, 1.0, 4.6, 24.0, 1.4, "Data Access Layer – Mongoose ODM Models & Repositories (User, ParkingLot, Slot, Tariff, Booking, ParkingSession, Payment, AuditLog)", fc="#FFFDE8", fs=8.2)
-    for n, x, y in svcs[5:]:
-        arrow(ax, (x + 2.2, y), (x + 2.2, 6.0))
-
-    # Data tier + external
-    package(ax, 0.5, 0.3, 11.5, 3.0, "Data Tier", "#FBEFE6")
-    db = component(ax, 2.5, 0.75, 7.5, 1.6, "MongoDB (Replica Set)", stereo="«database»", fc="white")
-    arrow(ax, (6.25, 4.6), (6.25, 2.35), "Mongoose driver (TLS)", dashed=True, lo=(1.6, 0.4))
-
-    package(ax, 13.0, 0.3, 12.5, 3.0, "External Systems", "#F2ECF8")
-    pg = component(ax, 19.5, 0.75, 5.6, 1.6, "Payment Gateway", stereo="«external» (Razorpay test mode)", fc="white", fs=8)
-    em = component(ax, 13.5, 0.75, 5.6, 1.6, "Email (SMTP) Server", stereo="«external»", fc="white", fs=8)
-    arrow(ax, (22.8, 9.6), (22.3, 2.35), "HTTPS order / verify", lo=(0.3, -2.9))
-    arrow(ax, (13.6, 6.9), (16.3, 2.35), "SMTP (Nodemailer)", lo=(0.6, -1.6))
-
-    # client -> API
-    arrow(ax, (22.1, 16.7), (22.1, 14.55), "HTTPS JSON + WSS", dashed=False, lo=(1.6, 0.4))
-    fig.savefig(OUT + "component.png", dpi=170, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-
 
 # ---------------------------------------------------------------- sequence diagram engine
 def sequence(fname, title, parts, msgs, width=14, actor_idx=(0,), frames=()):
     n = len(parts)
     rows = len(msgs)
-    H = rows * 0.62 + 2.6 + 0.95 * len(frames) + 0.3 * sum(1 for m in msgs if m[0] == m[1])
+    H = rows * 0.62 + 2.9 + 0.95 * len(frames) + 0.3 * sum(len(f[5::2]) for f in frames) + 0.3 * sum(1 for m in msgs if m[0] == m[1])
     fig, ax = plt.subplots(figsize=(width, H * 0.62))
     ax.set_xlim(0, width); ax.set_ylim(0, H); ax.axis("off")
     ax.text(width / 2, H - 0.25, title, ha="center", fontsize=12, weight="bold")
@@ -134,9 +75,7 @@ def sequence(fname, title, parts, msgs, width=14, actor_idx=(0,), frames=()):
             ax.text(x, top + 0.02, p, ha="center", va="center", fontsize=7.6, weight="bold")
             ystart = top - 0.35
         ax.plot([x, x], [ystart, bottom], color="#777", lw=0.9, ls=(0, (4, 3)))
-    y = top - 0.95
-    for fr in frames:
-        pass
+    y = top - 0.95 - 0.3 * max(parts[i].count(chr(10)) for i in actor_idx)
     frame_rows = {f[0]: f for f in frames}
     open_frames = []
     for idx, m in enumerate(msgs):
@@ -145,10 +84,12 @@ def sequence(fname, title, parts, msgs, width=14, actor_idx=(0,), frames=()):
             y -= 0.35
             open_frames.append((f, y + 0.67))
         for f in frames:
-            if len(f) > 5 and f[5] == idx:
-                ax.plot([xs[f[3]] - 0.95, xs[f[4]] + 0.95], [y + 0.3, y + 0.3], color="#B05", lw=1, ls=(0, (5, 3)))
-                ax.text(xs[f[3]] - 0.85, y + 0.12, f[6], fontsize=7, color="#B05", style="italic", va="center")
-                y -= 0.3
+            # f[5:] holds (divider_index, label) pairs for alt/else operands
+            for di, dl in zip(f[5::2], f[6::2]):
+                if di == idx:
+                    ax.plot([xs[f[3]] - 0.95, xs[f[4]] + 0.95], [y + 0.3, y + 0.3], color="#B05", lw=1, ls=(0, (5, 3)))
+                    ax.text(xs[f[3]] - 0.85, y + 0.12, dl, fontsize=7, color="#B05", style="italic", va="center")
+                    y -= 0.3
         a, b, text, kind = m
         if kind == "sep":
             ax.plot([xs[0] - 0.9, xs[-1] + 0.9], [y, y], color="#888", lw=0.9, ls=(0, (2, 2)))
@@ -185,92 +126,173 @@ def sequence(fname, title, parts, msgs, width=14, actor_idx=(0,), frames=()):
     plt.close(fig)
 
 
-def seq_booking():
-    P = ["Driver", "React SPA", "API Layer\n(Auth+RBAC+Validate)", "Booking\nService", "Slot Mgmt\nService", "MongoDB", "Notification\nService"]
-    M = [
-        (0, 1, "1: select lot, vehicle type, time window", "call"),
-        (1, 2, "2: GET /api/v1/slots/availability?lotId&type&from&to", "call"),
-        (2, 4, "3: getAvailableSlots(lotId, type, from, to)", "call"),
-        (4, 5, "4: find slots with no overlapping active booking", "call"),
-        (5, 4, "5: slot list", "ret"),
-        (4, 1, "6: 200 OK {slots[]}", "ret"),
-        (0, 1, "7: choose slot & confirm", "call"),
-        (1, 2, "8: POST /api/v1/bookings {slotId, vehicleNo, from, to}  + Bearer JWT", "call"),
-        (2, 2, "9: verify JWT, role = DRIVER, validate body", "self"),
-        (2, 3, "10: createBooking(userId, dto)", "call"),
-        (3, 5, "11: startTransaction(); check overlap on slotId", "call"),
-        (5, 3, "12: no conflict", "ret"),
-        (3, 5, "13: insert Booking{status:CONFIRMED, code}; commit", "call"),
-        (5, 3, "14: bookingId", "ret"),
-        (3, 6, "15: notify(bookingConfirmed) – email + socket 'slot:update'", "call"),
-        (3, 1, "16: 201 Created {bookingId, code, slot, amountEstimate}", "ret"),
-        (1, 0, "17: show confirmation + booking code", "ret"),
-        (5, 3, "12a: overlap found → abortTransaction()", "ret"),
-        (3, 1, "16a: 409 Conflict {SLOT_ALREADY_BOOKED}", "ret"),
-        (1, 0, "17a: 'Slot just got booked – pick another'", "ret"),
-    ]
-    sequence("seq_booking.png", "Sequence Diagram 1 – Reserve a Parking Slot (VPS-F-03, VPS-F-04)", P, M,
-             width=15, frames=[(10, 19, "alt [no overlapping booking]", 0, 6, 17, "[else: overlap found]")])
+
+# ---------------------------------------------------------------- component diagram
+def component_diagram():
+    fig, ax = plt.subplots(figsize=(13, 10.5))
+    ax.set_xlim(0, 26); ax.set_ylim(0, 21); ax.axis("off")
+    ax.text(13, 20.6, "Vehicle Parking System – UML Component Diagram", ha="center", fontsize=13, weight="bold")
+
+    # Presentation layer
+    package(ax, 0.5, 16.2, 25, 3.6, "Presentation Layer  –  React.js SPA (Browser)", "#EAF2FB")
+    ui = [("Vehicle Owner UI", 1.0), ("Parking Attendant UI", 7.1), ("Administrator UI", 13.2), ("API Client\n(Axios + Auth Context)", 19.3)]
+    uib = {}
+    for n, x in ui:
+        uib[n] = component(ax, x, 16.7, 5.6, 1.5, n, fc="#FFFFFF")
+    for n in ui[:3]:
+        bx = uib[n[0]]
+        ax.plot([bx[0] + bx[2] / 2, bx[0] + bx[2] / 2], [18.2, 18.6], color="#222", lw=1, ls=(0, (4, 3)))
+    ax.plot([3.8, 22.1], [18.6, 18.6], color="#222", lw=1, ls=(0, (4, 3)))
+    arrow(ax, (22.1, 18.6), (22.1, 18.2), dashed=True)
+    ax.text(13, 18.75, "«use»", ha="center", fontsize=7, style="italic")
+    ax.text(13, 19.35, "Role-based navigation: only the functions permitted to the logged-in role are shown (SRS 3.1)",
+            ha="center", fontsize=7.5, style="italic")
+
+    # Application layer
+    package(ax, 0.5, 4.2, 25, 10.9, "Application Layer  –  Node.js + Express.js REST API Server", "#EEF8EE")
+    component(ax, 1.0, 12.6, 11.6, 1.4, "Application / API Layer (Router, Controllers, Error Handler)", fc="#FFFDE8", fs=8.2)
+    component(ax, 13.4, 12.6, 11.6, 1.4, "Security Middleware (AuthN, Session, RBAC, Ownership, Validation)", fc="#FFF0E0", fs=8.2)
+    arrow(ax, (12.6, 13.3), (13.4, 13.3), dashed=False)
+    lollipop(ax, 6.8, 14.0, "REST /api/v1 (HTTPS, JSON)")
+
+    svcs = [("Auth\nService", 1.0, 9.6), ("User Management\nService", 5.9, 9.6), ("Vehicle\nService", 10.8, 9.6),
+            ("Parking Slot\nService", 15.7, 9.6), ("Parking Transaction\nService", 20.6, 9.6),
+            ("Report\nService", 10.8, 6.9), ("Audit Logging\nComponent", 15.7, 6.9), ("Fee\nService", 20.6, 6.9)]
+    for n, x, y in svcs:
+        component(ax, x, y, 4.4, 1.9, n, fc="white", fs=8)
+    for n, x, y in svcs[:5]:
+        arrow(ax, (x + 2.2, 12.6), (x + 2.2, y + 1.9))
+    ax.text(13, 12.25, "controllers delegate to services through defined service interfaces (NFR-10)", fontsize=7,
+            ha="center", style="italic", bbox=dict(fc="#EEF8EE", ec="none", pad=0.5))
+    # service-to-service dependencies
+    arrow(ax, (22.8, 9.6), (22.8, 8.8))
+    ax.text(23.0, 9.2, "calculate fee", fontsize=6.3, style="italic", ha="left")
+    arrow(ax, (20.6, 10.9), (20.1, 10.9))
+    ax.text(20.35, 11.75, "allocate /\nrelease slot", fontsize=6.3, style="italic", ha="center")
+    ax.text(5.65, 8.1, "Auth Service + Security\nMiddleware log failed logins\nand 401/403 to Audit (SEC-06)",
+            fontsize=6.6, style="italic", ha="center", va="center", bbox=dict(fc="white", ec="#999", pad=2.5))
+
+    component(ax, 1.0, 4.6, 24.0, 1.4, "Database Layer – Mongoose ODM models & repositories (users, sessions, vehicles, slots, parkingRecords, feeRules, auditLogs, counters)", fc="#FFFDE8", fs=8.0)
+    for n, x, y in svcs[5:]:
+        arrow(ax, (x + 2.2, y), (x + 2.2, 6.0))
+    arrow(ax, (2.0, 9.6), (2.0, 6.0))
+    arrow(ax, (9.3, 9.6), (9.3, 6.0))
+
+    # Data layer
+    package(ax, 0.5, 0.3, 25, 3.0, "Data Layer", "#FBEFE6")
+    component(ax, 9.25, 0.75, 7.5, 1.6, "MongoDB (Replica Set)", stereo="«database»", fc="white")
+    arrow(ax, (13.0, 4.6), (13.0, 2.35), "MongoDB driver (TLS, write concern majority)", dashed=True, lo=(3.0, 0.4))
+
+    arrow(ax, (22.1, 16.7), (22.1, 14.0), "HTTPS + JSON", dashed=False, lo=(1.3, 0.6))
+    fig.savefig(OUT + "component.png", dpi=170, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
 
 
-def seq_entry_exit():
-    P = ["Parking\nAttendant", "Attendant\nConsole (SPA)", "API Layer\n(Auth+RBAC)", "Parking Session\nService", "Billing &\nPayment Svc", "MongoDB", "Payment\nGateway"]
+# ---------------------------------------------------------------- sequence diagrams
+def seq_entry():
+    P = ["Parking\nAttendant", "React SPA", "Security\nMiddleware", "Parking Transaction\nService", "Parking Slot\nService", "MongoDB"]
     M = [
-        (0, 0, "VEHICLE ENTRY (CHECK-IN)", "sep"),
-        (0, 1, "1: enter vehicle no. (+ booking code if any)", "call"),
-        (1, 2, "2: POST /api/v1/sessions/entry {vehicleNo, type, bookingCode?}", "call"),
-        (2, 3, "3: checkIn(dto)  [role = ATTENDANT]", "call"),
-        (3, 5, "4: validate booking / atomically pick free slot (findOneAndUpdate)", "call"),
-        (5, 3, "5: slot → OCCUPIED", "ret"),
-        (3, 5, "6: insert ParkingSession{entryTime, slotId, status:ACTIVE}", "call"),
-        (3, 1, "7: 201 {sessionId, slotCode, entryTime}  + socket 'slot:update'", "ret"),
-        (0, 0, "VEHICLE EXIT (CHECK-OUT, FEE & PAYMENT)", "sep"),
-        (0, 1, "8: vehicle leaving – scan/enter vehicle no.", "call"),
-        (1, 2, "9: POST /api/v1/sessions/{id}/exit", "call"),
-        (2, 3, "10: checkOut(sessionId)", "call"),
-        (3, 4, "11: calculateFee(session, tariff)", "call"),
-        (4, 4, "12: hours = ceil((exit − entry − grace)/60); fee = base + rate × hours", "self"),
-        (4, 3, "13: fee breakdown", "ret"),
-        (3, 1, "14: 200 {fee, duration, paymentId}", "ret"),
-        (1, 2, "15: POST /api/v1/payments/{id}/pay {mode: CASH | UPI | CARD}", "call"),
-        (2, 4, "16: processPayment()", "call"),
-        (4, 6, "17: create order & verify payment signature", "call"),
-        (6, 4, "18: payment success", "ret"),
-        (4, 5, "19: Payment PAID, Session CLOSED, Slot AVAILABLE (transaction)", "call"),
-        (4, 1, "20: 200 {receiptNo, amount}  + socket 'slot:update'", "ret"),
-        (1, 0, "21: print / show receipt, open gate", "ret"),
+        (0, 1, "1: search vehicle by reg. no., click Record Entry (optional: choose slot)", "call"),
+        (1, 2, "2: POST /api/v1/parking/entry {vehicleId, slotId?}  + Bearer token", "call"),
+        (2, 2, "3: check session (not idle > 15 min), role ∈ {ATTENDANT, ADMIN}, validate body", "self"),
+        (2, 3, "4: recordEntry(vehicleId, slotId?, attendantId)", "call"),
+        (3, 5, "5: find Active parking record for vehicle", "call"),
+        (5, 3, "6: none (else 409 VEHICLE_ALREADY_PARKED)", "ret"),
+        (3, 5, "7: startTransaction()", "call"),
+        (3, 4, "8: allocate(vehicleType, slotId?)", "call"),
+        (4, 5, "9: findOneAndUpdate(Available + type → Occupied, lowest slotId)", "call"),
+        (5, 4, "10: slot A-01", "ret"),
+        (4, 3, "11: slot A-01", "ret"),
+        (3, 5, "12: insert parkingRecord {ticketNo, vehicleId, slotId, entryTime, status:Active}; commit", "call"),
+        (3, 1, "13: 201 Created {ticketNo, slotId, entryTime}", "ret"),
+        (1, 0, "14: show ticket number and slot", "ret"),
+        (5, 4, "10a: no matching Available slot (null)", "ret"),
+        (3, 1, "13a: 409 {NO_SLOT_AVAILABLE} → abortTransaction()", "ret"),
+        (1, 0, "14a: 'No parking slot available for this vehicle type'", "ret"),
+        (5, 3, "12b: write conflict / unique-index violation (concurrent entry)", "ret"),
+        (3, 1, "13b: 409 {SLOT_CONFLICT_RETRY} → abortTransaction()", "ret"),
+        (1, 0, "14b: 'Slot was just taken – please retry'", "ret"),
     ]
-    sequence("seq_entry_exit.png", "Sequence Diagram 2 – Vehicle Entry, Exit, Fee Calculation & Payment (VPS-F-06/07/08)", P, M,
-             width=15, frames=[(18, 19, "opt [mode = UPI or CARD]", 4, 6)])
+    sequence("seq_entry.png", "Sequence Diagram 1 – Record Vehicle Entry & Allocate Slot (FR-16 – FR-19, NFR-05)", P, M,
+             width=15, frames=[(9, 19, "alt [matching slot found and committed]", 0, 5, 14, "[else: no Available slot of this type]", 17, "[else: concurrent entry took the slot]")])
+
+
+def seq_exit():
+    P = ["Parking\nAttendant", "React SPA", "Security\nMiddleware", "Parking Transaction\nService", "Fee\nService", "Parking Slot\nService", "MongoDB"]
+    M = [
+        (0, 0, "STEP 1 – RECORD EXIT AND SHOW FEE SUMMARY", "sep"),
+        (0, 1, "1: search vehicle, click Record Exit", "call"),
+        (1, 2, "2: POST /api/v1/parking/exit {vehicleId}", "call"),
+        (2, 3, "3: recordExit(vehicleId)   [role ∈ {ATTENDANT, ADMIN}]", "call"),
+        (3, 6, "4: find Active record (else 404 NO_ACTIVE_RECORD); set exitTime = server time", "call"),
+        (3, 4, "5: calculateFee(vehicleType, entryTime, exitTime)", "call"),
+        (4, 6, "6: read current feeRule (hourlyRate, gracePeriod)", "call"),
+        (4, 4, "7: billable = d ≤ grace ? 0 : ceil((d − grace)/60);  fee = billable × hourlyRate", "self"),
+        (4, 3, "8: {durationMin, billableHours, fee}", "ret"),
+        (3, 1, "9: 200 {ticketNo, entryTime, exitTime, duration, fee}", "ret"),
+        (1, 0, "10: show summary (FR-23)", "ret"),
+        (0, 0, "STEP 2 – CONFIRM EXIT", "sep"),
+        (0, 1, "11: click Confirm Exit", "call"),
+        (1, 2, "12: POST /api/v1/parking/{ticketNo}/confirm-exit", "call"),
+        (2, 3, "13: confirmExit(ticketNo)", "call"),
+        (3, 6, "14: startTransaction(); record → Completed with fee", "call"),
+        (3, 5, "15: release(slotId)", "call"),
+        (5, 6, "16: slot status → Available; commit (write concern majority)", "call"),
+        (3, 1, "17: 200 {ticketNo, fee, status: Completed}", "ret"),
+        (1, 0, "18: exit complete – collect fee at counter", "ret"),
+    ]
+    sequence("seq_exit.png", "Sequence Diagram 2 – Record Vehicle Exit, Calculate Fee & Release Slot (FR-20 – FR-24)", P, M,
+             width=15)
 
 
 def seq_login():
-    P = ["User", "React SPA", "API Layer\n(Rate limiter+Validate)", "Auth & User\nService", "MongoDB", "Audit Log\nService"]
+    P = ["User", "React SPA", "Security\nMiddleware", "Auth\nService", "MongoDB", "Audit Logging\nComponent"]
     M = [
-        (0, 1, "1: enter email + password", "call"),
-        (1, 2, "2: POST /api/v1/auth/login {email, password}", "call"),
-        (2, 2, "3: rate-limit check (max 5 attempts / 15 min / IP+email)", "self"),
-        (2, 3, "4: login(email, password)", "call"),
-        (3, 4, "5: findUserByEmail(email)", "call"),
-        (4, 3, "6: user {passwordHash, role, failedAttempts}", "ret"),
-        (3, 3, "7: bcrypt.compare(password, passwordHash)", "self"),
-        (3, 3, "8: sign access JWT (15 min) + refresh token (7 days)", "self"),
-        (3, 5, "9: log LOGIN_SUCCESS", "call"),
-        (3, 1, "10: 200 {accessToken, user{id, name, role}} + HttpOnly refresh cookie", "ret"),
-        (1, 0, "11: redirect to role dashboard", "ret"),
-        (3, 4, "8a: increment failedAttempts; lock account after 5", "call"),
-        (3, 5, "9a: log LOGIN_FAILURE", "call"),
-        (3, 1, "10a: 401 {INVALID_CREDENTIALS}  (generic message)", "ret"),
-        (1, 0, "11a: show 'Invalid email or password'", "ret"),
+        (0, 1, "1: enter username + password", "call"),
+        (1, 2, "2: POST /api/v1/auth/login {username, password}", "call"),
+        (2, 2, "3: validate type / length / format (SEC-05)", "self"),
+        (2, 3, "4: login(username, password)", "call"),
+        (3, 4, "5: find active user by username", "call"),
+        (4, 3, "6: user {passwordHash, role, failedAttempts, lockUntil}", "ret"),
+        (3, 3, "7: if lockUntil > now → reject (SEC-08); else bcrypt.compare()", "self"),
+        (3, 4, "8: failedAttempts = 0; insert session {jti, userId, lastActivityAt}", "call"),
+        (3, 3, "9: sign JWT {sub, role, jti}", "self"),
+        (3, 1, "10: 200 {token, user {username, role}}", "ret"),
+        (1, 0, "11: open role home page", "ret"),
+        (3, 4, "8a: failedAttempts += 1; if 5 → lockUntil = now + 15 min", "call"),
+        (3, 5, "9a: log FAILED_LOGIN {time, username, sourceIP}", "call"),
+        (3, 1, "10a: 401 'Invalid username or password'", "ret"),
+        (1, 0, "11a: show generic error (FR-02)", "ret"),
     ]
-    sequence("seq_login.png", "Sequence Diagram 3 – User Login & Token Issue (VPS-F-01, VPS-SEC-01)", P, M,
-             width=14, frames=[(7, 14, "alt [password matches]", 0, 5, 11, "[else: password mismatch / user not found]")])
+    sequence("seq_login.png", "Sequence Diagram 3 – User Login with Lock-out & Audit (FR-01, FR-02, SEC-03, SEC-06, SEC-08)", P, M,
+             width=14, frames=[(7, 14, "alt [password matches and account not locked]", 0, 5, 11, "[else: wrong credentials or account locked]")])
+
+
+def seq_search():
+    P = ["User", "React SPA", "Security\nMiddleware", "Vehicle\nService", "Parking Transaction\nService", "MongoDB"]
+    M = [
+        (0, 1, "1: enter registration number", "call"),
+        (1, 2, "2: GET /api/v1/vehicles/search?regNo=KA01AB1234", "call"),
+        (2, 2, "3: authenticate; any role allowed", "self"),
+        (2, 3, "4: search(regNo, requester)", "call"),
+        (3, 5, "5: find vehicle by regNo (upper case)", "call"),
+        (5, 3, "6: vehicle {_id, ownerId, type}", "ret"),
+        (3, 3, "7: if requester is OWNER and ownerId ≠ requester → treat as not found (SEC-09)", "self"),
+        (3, 4, "8: getCurrentStatus(vehicleId)", "call"),
+        (4, 5, "9: find Active parking record", "call"),
+        (4, 3, "10: Parked {slotId, entryTime, elapsed} | Not Parked", "ret"),
+        (3, 4, "11: getHistory(vehicleId)  (Completed records, newest first)", "call"),
+        (4, 3, "12: [{entryTime, exitTime, slotId, fee}]", "ret"),
+        (3, 1, "13: 200 {vehicle, status, history}   or   404 VEHICLE_NOT_FOUND", "ret"),
+        (1, 0, "14: show status and history (FR-29, FR-30)", "ret"),
+    ]
+    sequence("seq_search.png", "Sequence Diagram 4 – Search & Track a Vehicle (FR-28 – FR-30, SEC-09)", P, M, width=14)
 
 
 def deployment():
-    fig, ax = plt.subplots(figsize=(13, 6.4))
-    ax.set_xlim(0, 26); ax.set_ylim(0, 12.6); ax.axis("off")
-    ax.text(13, 12.2, "Vehicle Parking System – Deployment View", ha="center", fontsize=13, weight="bold")
+    fig, ax = plt.subplots(figsize=(13, 6.0))
+    ax.set_xlim(0, 26); ax.set_ylim(0, 12); ax.axis("off")
+    ax.text(13, 11.6, "Vehicle Parking System – Deployment View", ha="center", fontsize=13, weight="bold")
 
     def node(x, y, w, h, title, items, fc):
         d = 0.35
@@ -282,24 +304,20 @@ def deployment():
             ax.add_patch(Rectangle((x + 0.3, y + h - 2.0 - i * 0.85), w - 0.6, 0.65, fc="white", ec="#555"))
             ax.text(x + w / 2, y + h - 1.67 - i * 0.85, it, ha="center", va="center", fontsize=7.5)
 
-    node(0.4, 3.6, 5.6, 4.9, "«device» Client Device\n(Web Browser)", ["React SPA bundle", "Socket.IO client", "Driver / Attendant / Admin"], "#EAF2FB")
-    node(7.6, 1.6, 6.6, 7.9, "«execution env» App Server\n(Ubuntu 22.04 LTS, Node.js 20 LTS)", ["Nginx reverse proxy (TLS 1.2+)", "Static React build (dist/)", "Express API (PM2 cluster mode)", "Socket.IO server", "node-cron scheduler", "Winston log files"], "#EEF8EE")
-    node(16.4, 0.4, 4.8, 4.6, "«database server»\nMongoDB 7 (Replica Set)", ["Primary", "2 × Secondary", "Daily backup (mongodump)"], "#FBEFE6")
-    node(16.4, 7.4, 4.8, 3.0, "«external system»\nPayment Gateway", ["Razorpay test-mode API"], "#F2ECF8")
-    node(22.1, 7.4, 3.6, 3.0, "«external system»\nSMTP Mail Server", ["Email delivery"], "#F2ECF8")
-    arrow(ax, (6.35, 6.0), (7.6, 6.0), "HTTPS / WSS\n:443", dashed=False, lo=(0, 0.8))
-    arrow(ax, (14.55, 2.7), (16.4, 2.7), "TCP 27017\n(TLS + auth)", dashed=False, lo=(0, 0.8))
-    arrow(ax, (14.55, 8.6), (16.4, 8.6), "HTTPS REST", dashed=False, lo=(0, 0.45))
-    ax.plot([14.55, 15.3, 15.3, 23.9, 23.9], [6.6, 6.6, 6.4, 6.4, 6.6], color="#222", lw=1)
-    arrow(ax, (23.9, 6.6), (23.9, 7.4), dashed=False)
-    ax.text(19.6, 6.15, "SMTP + STARTTLS :587", fontsize=7, ha="center", va="center")
+    node(0.6, 3.2, 6.0, 4.9, "«device» Client Device\n(Web browser, ≥ 360 px wide)", ["React SPA bundle", "Owner / Attendant / Admin UI", "Token kept in memory only"], "#EAF2FB")
+    node(9.0, 1.2, 7.0, 7.9, "«execution env» Application Server\n(Ubuntu 22.04 LTS, Node.js LTS)", ["Nginx: TLS 1.2+, HTTP → HTTPS", "Static React build (dist/)", "Express REST API (PM2)", "Security middleware", "Winston logs (no passwords)", ".env: DB URI, JWT secret"], "#EEF8EE")
+    node(18.8, 2.0, 6.4, 6.0, "«database server»\nMongoDB (3-member Replica Set)", ["Primary", "2 × Secondary", "Journaled, majority writes", "Daily backup (mongodump)"], "#FBEFE6")
+    arrow(ax, (6.95, 5.6), (9.0, 5.6), "HTTPS (443)\nJSON / REST", dashed=False, lo=(0, 0.8))
+    arrow(ax, (16.35, 5.0), (18.8, 5.0), "MongoDB wire\nprotocol, TLS + auth", dashed=False, lo=(0, 0.8))
     fig.savefig(OUT + "deployment.png", dpi=170, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
-component_diagram()
-seq_booking()
-seq_entry_exit()
-seq_login()
-deployment()
-print("done")
+if __name__ == "__main__":
+    component_diagram()
+    seq_entry()
+    seq_exit()
+    seq_login()
+    seq_search()
+    deployment()
+    print("done")

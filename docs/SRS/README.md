@@ -1,10 +1,11 @@
 # Software Requirements Specification
 
-Upload the team's completed SRS (IEEE format) here, as both PDF and DOCX.
+Upload the team's SRS v1.1 (IEEE format) here, as both PDF and DOCX.
 
-The SAD and the Test Plan use these requirement IDs:
-- `VPS-F-01` … `VPS-F-12` (functional)
-- `VPS-NF-01` … `VPS-NF-05` (non-functional)
-- `VPS-SEC-01` … `VPS-SEC-05` (security)
+The SAD v1.1 uses the SRS requirement IDs exactly as they are:
+- `FR-01` … `FR-33` (functional)
+- `NFR-01` … `NFR-12` (non-functional)
+- `SEC-01` … `SEC-10` (security)
+- `BR-01` … `BR-06` (business rules)
 
-Keep the IDs the same in all three documents so the traceability matrix (SRS Appendix C) lines up.
+SAD §3.8 gives the **Architecture Reference** and **Design Reference** for every requirement. Use it to fill in those columns of the RTM in SRS Appendix C.
