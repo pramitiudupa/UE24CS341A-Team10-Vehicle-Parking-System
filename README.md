@@ -2,7 +2,7 @@
 
 **Software Engineering (UE24CS341A) Mini-Project · Semester 5 · Section F · PES University, Bengaluru**
 
-A web-based system for managing parking slots and tracking vehicles. Vehicle owners register their vehicles, see which slots are free, and find where their vehicle is parked. Parking attendants record vehicle entry and exit: the system allocates a matching slot, calculates the fee from the configured hourly rates, and releases the slot. Administrators manage slots, users and fee rules, and generate occupancy and vehicle tracking reports.
+A web-based system for managing parking slots and tracking vehicles. Parking attendants register vehicles, check slot availability, record vehicle entry and exit, and search for a vehicle to see where it is parked and its history. On entry the system allocates a matching slot; on exit it calculates the fee and releases the slot. The fee uses hourly rates with a fixed 15-minute grace period. Administrators also manage slots, users and hourly rates, and generate the parking occupancy report.
 
 | | |
 |---|---|
@@ -22,18 +22,18 @@ A web-based system for managing parking slots and tracking vehicles. Vehicle own
 
 | # | Deliverable | Location | Status |
 |---|---|---|---|
-| 1 | Software Requirements Specification (IEEE format) | [`docs/SRS/`](docs/SRS/) | v1.1 completed by team – to be uploaded |
-| 2 | Software Test Plan (IEEE format, with test cases) | [`docs/TestPlan/`](docs/TestPlan/) | v1.1 completed by team – to be uploaded |
-| 3 | Software Architecture & Design Specification (SAD) | [`docs/SAD/`](docs/SAD/) | ✅ v1.1 uploaded (aligned with SRS v1.1) |
+| 1 | Software Requirements Specification (IEEE format) | [`docs/SRS/`](docs/SRS/) | ✅ Final v1.1 ([PDF](docs/SRS/Vehicle_Parking_System_SRS_v1.1.pdf)) |
+| 2 | Software Test Plan (IEEE format, with 37 test cases) | [`docs/TestPlan/`](docs/TestPlan/) | ✅ Final v1.1 ([PDF](docs/TestPlan/Vehicle_Parking_System_Test_Plan_v1.1.pdf)) |
+| 3 | Software Architecture & Design Specification (SAD) | [`docs/SAD/`](docs/SAD/) | ✅ Final v1.1 ([PDF](docs/SAD/Team10_Vehicle_Parking_System_SAD.pdf)) |
 | 4 | Implementation start + sprint activity | [`docs/Sprint-Plan.md`](docs/Sprint-Plan.md) | Sprint 1 planned |
 
 ## SAD at a glance
 
-SAD v1.1 is aligned with SRS v1.1 (FR-01…FR-33, NFR-01…NFR-12, SEC-01…SEC-10, BR-01…BR-06) and with the Test Plan v1.1 test-case IDs.
+The SRS, SAD and Test Plan all use the same requirement IDs: FR-01…FR-23, NFR-01…NFR-07, SEC-01…SEC-07 and BR-01…BR-05. They also share the same test-case IDs. Every requirement maps to a component, a design section and at least one test case (SAD §3.8).
 
 - **Architecture:** Layered three-tier (React SPA → Express REST API → MongoDB replica set), with the routes, security middleware, services and repositories kept in separate layers.
-- **Components** (the names used in the SRS RTM): Security Middleware, Auth Service, User Management Service, Vehicle Service, Parking Slot Service, Parking Transaction Service, Fee Service, Report Service, Audit Logging Component, Database Layer.
-- **Key design points:** slot allocation and exit run inside transactions, backed by unique indexes, so a slot can never hold two vehicles. The fee is billable hours × hourly rate, with a grace period. Each JWT is tied to a server-side session, which lets logout cancel the token and ends the session after 15 minutes idle. bcrypt hashing, account lock-out after 5 failed logins, server-side role checks (Vehicle Owner / Parking Attendant / Administrator), an audit log, TLS, and a STRIDE threat model.
+- **Components** (the names used in the SRS RTM): Security Middleware, Auth Service, User Management Service, Vehicle Service, Parking Slot Service, Parking Transaction Service, Fee Service, Report Service, Database Layer.
+- **Key design points:** slot allocation and exit run inside transactions, backed by unique indexes, so a slot can never hold two vehicles. The fee is billable hours × hourly rate, after a fixed 15-minute grace period. Each JWT is tied to a server-side session, which lets logout cancel the token and ends the session after 15 minutes idle. Also: bcrypt hashing, server-side role checks (Parking Attendant / Administrator) and TLS. Threats are analysed with a STRIDE model.
 
 | Component diagram | Deployment view |
 |---|---|
@@ -47,9 +47,9 @@ Sequence diagrams: [Vehicle entry & slot allocation](docs/diagrams/seq_entry.png
 .
 ├── README.md
 ├── docs/
-│   ├── SRS/                  # Software Requirements Specification
-│   ├── SAD/                  # Software Architecture & Design Specification (PDF + DOCX)
-│   ├── TestPlan/             # Software Test Plan + test cases
+│   ├── SRS/                  # Software Requirements Specification v1.1 (PDF + DOCX)
+│   ├── SAD/                  # Software Architecture & Design Specification v1.1 (PDF + DOCX)
+│   ├── TestPlan/             # Software Test Plan v1.1 with test cases (PDF + DOCX)
 │   ├── Sprint-Plan.md        # Sprint backlog for implementation
 │   ├── diagrams/             # UML component, deployment and sequence diagrams (PNG)
 │   │   └── source/           # Python scripts that regenerate the diagrams and the SAD .docx

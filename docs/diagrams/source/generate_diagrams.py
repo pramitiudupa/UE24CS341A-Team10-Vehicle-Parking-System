@@ -135,7 +135,7 @@ def component_diagram():
 
     # Presentation layer
     package(ax, 0.5, 16.2, 25, 3.6, "Presentation Layer  –  React.js SPA (Browser)", "#EAF2FB")
-    ui = [("Vehicle Owner UI", 1.0), ("Parking Attendant UI", 7.1), ("Administrator UI", 13.2), ("API Client\n(Axios + Auth Context)", 19.3)]
+    ui = [("Login & Session UI", 1.0), ("Parking Attendant UI", 7.1), ("Administrator UI", 13.2), ("API Client\n(Axios + Auth Context)", 19.3)]
     uib = {}
     for n, x in ui:
         uib[n] = component(ax, x, 16.7, 5.6, 1.5, n, fc="#FFFFFF")
@@ -151,32 +151,30 @@ def component_diagram():
     # Application layer
     package(ax, 0.5, 4.2, 25, 10.9, "Application Layer  –  Node.js + Express.js REST API Server", "#EEF8EE")
     component(ax, 1.0, 12.6, 11.6, 1.4, "Application / API Layer (Router, Controllers, Error Handler)", fc="#FFFDE8", fs=8.2)
-    component(ax, 13.4, 12.6, 11.6, 1.4, "Security Middleware (AuthN, Session, RBAC, Ownership, Validation)", fc="#FFF0E0", fs=8.2)
+    component(ax, 13.4, 12.6, 11.6, 1.4, "Security Middleware (AuthN, Session, RBAC, Validation)", fc="#FFF0E0", fs=8.2)
     arrow(ax, (12.6, 13.3), (13.4, 13.3), dashed=False)
     lollipop(ax, 6.8, 14.0, "REST /api/v1 (HTTPS, JSON)")
 
     svcs = [("Auth\nService", 1.0, 9.6), ("User Management\nService", 5.9, 9.6), ("Vehicle\nService", 10.8, 9.6),
             ("Parking Slot\nService", 15.7, 9.6), ("Parking Transaction\nService", 20.6, 9.6),
-            ("Report\nService", 10.8, 6.9), ("Audit Logging\nComponent", 15.7, 6.9), ("Fee\nService", 20.6, 6.9)]
+            ("Report\nService", 15.7, 6.9), ("Fee\nService", 20.6, 6.9)]
     for n, x, y in svcs:
         component(ax, x, y, 4.4, 1.9, n, fc="white", fs=8)
     for n, x, y in svcs[:5]:
         arrow(ax, (x + 2.2, 12.6), (x + 2.2, y + 1.9))
-    ax.text(13, 12.25, "controllers delegate to services through defined service interfaces (NFR-10)", fontsize=7,
+    ax.text(13, 12.25, "controllers delegate to services through defined service interfaces", fontsize=7,
             ha="center", style="italic", bbox=dict(fc="#EEF8EE", ec="none", pad=0.5))
     # service-to-service dependencies
     arrow(ax, (22.8, 9.6), (22.8, 8.8))
     ax.text(23.0, 9.2, "calculate fee", fontsize=6.3, style="italic", ha="left")
     arrow(ax, (20.6, 10.9), (20.1, 10.9))
     ax.text(20.35, 11.75, "allocate /\nrelease slot", fontsize=6.3, style="italic", ha="center")
-    ax.text(5.65, 8.1, "Auth Service + Security\nMiddleware log failed logins\nand 401/403 to Audit (SEC-06)",
-            fontsize=6.6, style="italic", ha="center", va="center", bbox=dict(fc="white", ec="#999", pad=2.5))
 
-    component(ax, 1.0, 4.6, 24.0, 1.4, "Database Layer – Mongoose ODM models & repositories (users, sessions, vehicles, slots, parkingRecords, feeRules, auditLogs, counters)", fc="#FFFDE8", fs=8.0)
+    component(ax, 1.0, 4.6, 24.0, 1.4, "Database Layer – Mongoose ODM models & repositories (users, sessions, vehicles, slots, parkingRecords, feeRates, counters)", fc="#FFFDE8", fs=8.0)
     for n, x, y in svcs[5:]:
         arrow(ax, (x + 2.2, y), (x + 2.2, 6.0))
-    arrow(ax, (2.0, 9.6), (2.0, 6.0))
-    arrow(ax, (9.3, 9.6), (9.3, 6.0))
+    for x in (1.0, 5.9, 10.8):
+        arrow(ax, (x + 2.2, 9.6), (x + 2.2, 6.0))
 
     # Data layer
     package(ax, 0.5, 0.3, 25, 3.0, "Data Layer", "#FBEFE6")
@@ -213,8 +211,9 @@ def seq_entry():
         (3, 1, "13b: 409 {SLOT_CONFLICT_RETRY} → abortTransaction()", "ret"),
         (1, 0, "14b: 'Slot was just taken – please retry'", "ret"),
     ]
-    sequence("seq_entry.png", "Sequence Diagram 1 – Record Vehicle Entry & Allocate Slot (FR-16 – FR-19, NFR-05)", P, M,
-             width=15, frames=[(9, 19, "alt [matching slot found and committed]", 0, 5, 14, "[else: no Available slot of this type]", 17, "[else: concurrent entry took the slot]")])
+    sequence("seq_entry.png", "Sequence Diagram 1 – Record Vehicle Entry & Allocate Slot (FR-11 – FR-14, NFR-04)", P, M,
+             width=15, frames=[(9, 19, "alt [matching slot found and committed]", 0, 5, 14,
+                                "[else: no Available slot of this type]", 17, "[else: concurrent entry took the slot]")])
 
 
 def seq_exit():
@@ -226,11 +225,11 @@ def seq_exit():
         (2, 3, "3: recordExit(vehicleId)   [role ∈ {ATTENDANT, ADMIN}]", "call"),
         (3, 6, "4: find Active record (else 404 NO_ACTIVE_RECORD); set exitTime = server time", "call"),
         (3, 4, "5: calculateFee(vehicleType, entryTime, exitTime)", "call"),
-        (4, 6, "6: read current feeRule (hourlyRate, gracePeriod)", "call"),
-        (4, 4, "7: billable = d ≤ grace ? 0 : ceil((d − grace)/60);  fee = billable × hourlyRate", "self"),
+        (4, 6, "6: read current hourly rate for the vehicle type", "call"),
+        (4, 4, "7: billable = d ≤ 15 ? 0 : ceil((d − 15)/60);  fee = billable × hourlyRate", "self"),
         (4, 3, "8: {durationMin, billableHours, fee}", "ret"),
         (3, 1, "9: 200 {ticketNo, entryTime, exitTime, duration, fee}", "ret"),
-        (1, 0, "10: show summary (FR-23)", "ret"),
+        (1, 0, "10: show summary (FR-17)", "ret"),
         (0, 0, "STEP 2 – CONFIRM EXIT", "sep"),
         (0, 1, "11: click Confirm Exit", "call"),
         (1, 2, "12: POST /api/v1/parking/{ticketNo}/confirm-exit", "call"),
@@ -241,52 +240,57 @@ def seq_exit():
         (3, 1, "17: 200 {ticketNo, fee, status: Completed}", "ret"),
         (1, 0, "18: exit complete – collect fee at counter", "ret"),
     ]
-    sequence("seq_exit.png", "Sequence Diagram 2 – Record Vehicle Exit, Calculate Fee & Release Slot (FR-20 – FR-24)", P, M,
+    sequence("seq_exit.png", "Sequence Diagram 2 – Record Vehicle Exit, Calculate Fee & Release Slot (FR-15 – FR-18)", P, M,
              width=15)
 
 
 def seq_login():
-    P = ["User", "React SPA", "Security\nMiddleware", "Auth\nService", "MongoDB", "Audit Logging\nComponent"]
+    P = ["User\n(Attendant / Admin)", "React SPA", "Security\nMiddleware", "Auth\nService", "MongoDB"]
     M = [
+        (0, 0, "LOGIN", "sep"),
         (0, 1, "1: enter username + password", "call"),
         (1, 2, "2: POST /api/v1/auth/login {username, password}", "call"),
         (2, 2, "3: validate type / length / format (SEC-05)", "self"),
         (2, 3, "4: login(username, password)", "call"),
         (3, 4, "5: find active user by username", "call"),
-        (4, 3, "6: user {passwordHash, role, failedAttempts, lockUntil}", "ret"),
-        (3, 3, "7: if lockUntil > now → reject (SEC-08); else bcrypt.compare()", "self"),
-        (3, 4, "8: failedAttempts = 0; insert session {jti, userId, lastActivityAt}", "call"),
-        (3, 3, "9: sign JWT {sub, role, jti}", "self"),
-        (3, 1, "10: 200 {token, user {username, role}}", "ret"),
-        (1, 0, "11: open role home page", "ret"),
-        (3, 4, "8a: failedAttempts += 1; if 5 → lockUntil = now + 15 min", "call"),
-        (3, 5, "9a: log FAILED_LOGIN {time, username, sourceIP}", "call"),
-        (3, 1, "10a: 401 'Invalid username or password'", "ret"),
-        (1, 0, "11a: show generic error (FR-02)", "ret"),
+        (4, 3, "6: user {passwordHash, role}  (or none)", "ret"),
+        (3, 3, "7: bcrypt.compare(password, passwordHash)", "self"),
+        (3, 4, "8: insert session {jti, userId, lastActivityAt}", "call"),
+        (3, 1, "9: 200 {token (JWT with jti), user {username, role}}", "ret"),
+        (1, 0, "10: open role home page", "ret"),
+        (3, 1, "9a: 401 'Invalid username or password'", "ret"),
+        (1, 0, "10a: show the same generic message (FR-02)", "ret"),
+        (0, 0, "EVERY LATER REQUEST", "sep"),
+        (1, 2, "11: any request + Bearer token", "call"),
+        (2, 4, "12: find session by jti", "call"),
+        (2, 2, "13: revoked or idle > 15 min → 401 (FR-03, SEC-06); else lastActivityAt = now", "self"),
+        (0, 0, "LOGOUT", "sep"),
+        (1, 2, "14: POST /api/v1/auth/logout", "call"),
+        (2, 4, "15: session.revoked = true", "call"),
+        (2, 1, "16: 200 – token no longer accepted", "ret"),
     ]
-    sequence("seq_login.png", "Sequence Diagram 3 – User Login with Lock-out & Audit (FR-01, FR-02, SEC-03, SEC-06, SEC-08)", P, M,
-             width=14, frames=[(7, 14, "alt [password matches and account not locked]", 0, 5, 11, "[else: wrong credentials or account locked]")])
+    sequence("seq_login.png", "Sequence Diagram 3 – Login, Session Timeout & Logout (FR-01 – FR-03, SEC-03, SEC-06)", P, M,
+             width=14, frames=[(8, 12, "alt [user found and password matches]", 0, 4, 11, "[else]")])
 
 
 def seq_search():
-    P = ["User", "React SPA", "Security\nMiddleware", "Vehicle\nService", "Parking Transaction\nService", "MongoDB"]
+    P = ["Parking\nAttendant", "React SPA", "Security\nMiddleware", "Vehicle\nService", "Parking Transaction\nService", "MongoDB"]
     M = [
         (0, 1, "1: enter registration number", "call"),
         (1, 2, "2: GET /api/v1/vehicles/search?regNo=KA01AB1234", "call"),
-        (2, 2, "3: authenticate; any role allowed", "self"),
-        (2, 3, "4: search(regNo, requester)", "call"),
+        (2, 2, "3: authenticate; role ∈ {ATTENDANT, ADMIN}", "self"),
+        (2, 3, "4: search(regNo)", "call"),
         (3, 5, "5: find vehicle by regNo (upper case)", "call"),
-        (5, 3, "6: vehicle {_id, ownerId, type}", "ret"),
-        (3, 3, "7: if requester is OWNER and ownerId ≠ requester → treat as not found (SEC-09)", "self"),
-        (3, 4, "8: getCurrentStatus(vehicleId)", "call"),
-        (4, 5, "9: find Active parking record", "call"),
-        (4, 3, "10: Parked {slotId, entryTime, elapsed} | Not Parked", "ret"),
-        (3, 4, "11: getHistory(vehicleId)  (Completed records, newest first)", "call"),
-        (4, 3, "12: [{entryTime, exitTime, slotId, fee}]", "ret"),
-        (3, 1, "13: 200 {vehicle, status, history}   or   404 VEHICLE_NOT_FOUND", "ret"),
-        (1, 0, "14: show status and history (FR-29, FR-30)", "ret"),
+        (5, 3, "6: vehicle {_id, regNo, vehicleType}  (or none → 404)", "ret"),
+        (3, 4, "7: getCurrentStatus(vehicleId)", "call"),
+        (4, 5, "8: find Active parking record", "call"),
+        (4, 3, "9: Parked {slotId, entryTime, elapsed} | Not Parked", "ret"),
+        (3, 4, "10: getHistory(vehicleId)  (Completed records, newest first)", "call"),
+        (4, 3, "11: [{entryTime, exitTime, slotId, fee}]", "ret"),
+        (3, 1, "12: 200 {vehicle, status, history}   or   404 VEHICLE_NOT_FOUND", "ret"),
+        (1, 0, "13: show status and history (FR-21, FR-22)", "ret"),
     ]
-    sequence("seq_search.png", "Sequence Diagram 4 – Search & Track a Vehicle (FR-28 – FR-30, SEC-09)", P, M, width=14)
+    sequence("seq_search.png", "Sequence Diagram 4 – Search & Track a Vehicle (FR-20 – FR-22, NFR-01)", P, M, width=14)
 
 
 def deployment():
@@ -304,7 +308,7 @@ def deployment():
             ax.add_patch(Rectangle((x + 0.3, y + h - 2.0 - i * 0.85), w - 0.6, 0.65, fc="white", ec="#555"))
             ax.text(x + w / 2, y + h - 1.67 - i * 0.85, it, ha="center", va="center", fontsize=7.5)
 
-    node(0.6, 3.2, 6.0, 4.9, "«device» Client Device\n(Web browser, ≥ 360 px wide)", ["React SPA bundle", "Owner / Attendant / Admin UI", "Token kept in memory only"], "#EAF2FB")
+    node(0.6, 3.2, 6.0, 4.9, "«device» Client Device\n(Web browser, ≥ 360 px wide)", ["React SPA bundle", "Attendant / Admin UI", "Token kept in memory only"], "#EAF2FB")
     node(9.0, 1.2, 7.0, 7.9, "«execution env» Application Server\n(Ubuntu 22.04 LTS, Node.js LTS)", ["Nginx: TLS 1.2+, HTTP → HTTPS", "Static React build (dist/)", "Express REST API (PM2)", "Security middleware", "Winston logs (no passwords)", ".env: DB URI, JWT secret"], "#EEF8EE")
     node(18.8, 2.0, 6.4, 6.0, "«database server»\nMongoDB (3-member Replica Set)", ["Primary", "2 × Secondary", "Journaled, majority writes", "Daily backup (mongodump)"], "#FBEFE6")
     arrow(ax, (6.95, 5.6), (9.0, 5.6), "HTTPS (443)\nJSON / REST", dashed=False, lo=(0, 0.8))

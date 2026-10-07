@@ -1,11 +1,12 @@
 # Software Requirements Specification
 
-Upload the team's SRS v1.1 (IEEE format) here, as both PDF and DOCX.
+**Final version: SRS v1.1**
+- [`Vehicle_Parking_System_SRS_v1.1.pdf`](Vehicle_Parking_System_SRS_v1.1.pdf), for submission
+- [`Vehicle_Parking_System_SRS_v1.1.docx`](Vehicle_Parking_System_SRS_v1.1.docx), editable source
 
-The SAD v1.1 uses the SRS requirement IDs exactly as they are:
-- `FR-01` … `FR-33` (functional)
-- `NFR-01` … `NFR-12` (non-functional)
-- `SEC-01` … `SEC-10` (security)
-- `BR-01` … `BR-06` (business rules)
+It defines the requirement IDs `FR-01`…`FR-23`, `NFR-01`…`NFR-07`, `SEC-01`…`SEC-07` and `BR-01`…`BR-05`.
 
-SAD §3.8 gives the **Architecture Reference** and **Design Reference** for every requirement. Use it to fill in those columns of the RTM in SRS Appendix C.
+These IDs line up exactly across all three documents:
+- the RTM in SRS Appendix C,
+- the traceability table in SAD v1.1 §3.8,
+- Section 13 of Test Plan v1.1.
