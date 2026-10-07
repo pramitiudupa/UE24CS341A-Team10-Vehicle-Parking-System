@@ -152,7 +152,7 @@ table(["Role", "Name", "Signature/Date"],
       [["Author (Architecture & Design)", "Pramiti Ragavendra Udupa", ""],
        ["Reviewer (SRS)", "Pandi Snehitha", ""],
        ["Reviewer (QA Lead, Test Plan)", "Ramitha R", ""],
-       ["Course Faculty", "", ""]],
+       ["Course Faculty", "Ashok Patil", ""]],
       [2.2, 2.2, 1.8])
 
 # =====================================================================  1 INTRO
@@ -655,7 +655,6 @@ bullets([
 h2("4.6 Open Issues & Next Steps")
 bullets([
     "Default hourly rates (SRS 2.6) to be confirmed by the reviewer before system testing.",
-    "Group number to be filled on the cover pages of the SRS and the Test Plan.",
     "Fill in the Code File Reference column of the RTM (SRS Appendix C) as implementation progresses.",
     "Possible later versions: number-plate recognition, online payment, reservations, mobile app (all out of scope for this version).",
 ])
