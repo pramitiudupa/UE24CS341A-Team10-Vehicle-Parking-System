@@ -25,7 +25,15 @@ A web-based system for managing parking slots and tracking vehicles. Parking att
 | 1 | Software Requirements Specification (IEEE format) | [`docs/SRS/`](docs/SRS/) | ✅ Final v1.1 ([PDF](docs/SRS/Vehicle_Parking_System_SRS_v1.1.pdf)) |
 | 2 | Software Test Plan (IEEE format, with 37 test cases) | [`docs/TestPlan/`](docs/TestPlan/) | ✅ Final v1.1 ([PDF](docs/TestPlan/Vehicle_Parking_System_Test_Plan_v1.1.pdf)) |
 | 3 | Software Architecture & Design Specification (SAD) | [`docs/SAD/`](docs/SAD/) | ✅ Final v1.1 ([PDF](docs/SAD/Team10_Vehicle_Parking_System_SAD.pdf)) |
-| 4 | Implementation start + sprint activity | [`docs/Sprint-Plan.md`](docs/Sprint-Plan.md) | Sprint 1 planned |
+| 4 | Implementation start + sprint activity | [`docs/Sprint-Plan.md`](docs/Sprint-Plan.md) | Backlog and two sprints planned (see Part-2) |
+
+## Part-2 Deliverables
+
+| # | Deliverable | Due | Where | Status |
+|---|---|---|---|---|
+| 1 | Backlog from SRS FRs/NFRs, story points, assignees, two sprints | 12-10-2026 | [Issues](https://github.com/pramitiudupa/UE24CS341A-Team10-Vehicle-Parking-System/issues) · [`docs/Sprint-Plan.md`](docs/Sprint-Plan.md) | ✅ 38 stories, 105 story points |
+| 2 | Sprint 1: implementation, GitHub Actions, PRs, 1-minute video | 19–23 Oct 2026 | Milestone **Sprint 1** | Planned (63 SP) |
+| 3 | Sprint 2: implementation, 2-minute video, documentation, freeze | 26–30 Oct 2026 | Milestone **Sprint 2** | Planned (42 SP) |
 
 ## SAD at a glance
 
@@ -50,7 +58,7 @@ Sequence diagrams: [Vehicle entry & slot allocation](docs/diagrams/seq_entry.png
 │   ├── SRS/                  # Software Requirements Specification v1.1 (PDF + DOCX)
 │   ├── SAD/                  # Software Architecture & Design Specification v1.1 (PDF + DOCX)
 │   ├── TestPlan/             # Software Test Plan v1.1 with test cases (PDF + DOCX)
-│   ├── Sprint-Plan.md        # Sprint backlog for implementation
+│   ├── Sprint-Plan.md        # Product backlog and sprint plan (Part-2)
 │   ├── diagrams/             # UML component, deployment and sequence diagrams (PNG)
 │   │   └── source/           # Python scripts that regenerate the diagrams and the SAD .docx
 │   └── course-material/      # Templates and instructions given by the course
